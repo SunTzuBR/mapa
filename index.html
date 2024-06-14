@@ -19,6 +19,24 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 
+// Seu GeoJSON dos municípios de Alagoas
+const geojsonUrl = 'AL.json';
+
+// Função para estilizar os polígonos
+function style(feature) {
+  const atendimentos = feature.properties.ATENDIMENTOS || 0;
+  const cor = d3.scaleSequential(d3.interpolateBlues)
+                .domain([0, 100])  // Ajuste o domínio conforme necessário
+                .clamp(true);
+  return {
+    fillColor: cor(atendimentos),
+    weight: 1,
+    opacity: 1,
+    color: 'white',
+    fillOpacity: 0.8
+  };
+}
+
 // Criar o mapa inicializando no centro de Alagoas
 var map = L.map('map').setView([-9.5733, -36.7820], 8);
 
@@ -27,27 +45,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18,
 }).addTo(map);
 
-// Carregar GeoJSON dos municípios de Alagoas
-fetch('AL.json')
+// Carregar GeoJSON e adicionar ao mapa
+fetch(geojsonUrl)
   .then(response => response.json())
   .then(data => {
-    // Função para estilizar as camadas GeoJSON de acordo com os dados de atendimentos
-    function style(feature) {
-      const municipio = feature.properties.NOME;
-      const atendimentos = dadosAtendimentos[municipio] || 0;
-      const cor = d3.scaleSequential(d3.interpolateBlues)
-                    .domain([0, 100]) // Ajustar o domínio conforme necessário
-                    .clamp(true);
-      return {
-        fillColor: cor(atendimentos),
-        weight: 1,
-        opacity: 1,
-        color: 'white',
-        fillOpacity: 0.8
-      };
-    }
-
-    // Criar camada GeoJSON e adicionar ao mapa
     L.geoJSON(data, {
       style: style
     }).addTo(map);
