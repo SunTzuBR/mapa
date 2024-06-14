@@ -1,19 +1,59 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Mapa com GeoJSON e Leaflet</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        #map {
-            height: 600px;
-            width: 100%;
-        }
-    </style>
+  <title>Mapa Interativo de Alagoas</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 600px;
+    }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="script.js"></script>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+
+// Criar o mapa inicializando no centro de Alagoas
+var map = L.map('map').setView([-9.5733, -36.7820], 8);
+
+// Adicionar camada de mapa base (OpenStreetMap)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+}).addTo(map);
+
+// Carregar GeoJSON dos municípios de Alagoas
+fetch('AL.json')
+  .then(response => response.json())
+  .then(data => {
+    // Função para estilizar as camadas GeoJSON de acordo com os dados de atendimentos
+    function style(feature) {
+      const municipio = feature.properties.NOME;
+      const atendimentos = dadosAtendimentos[municipio] || 0;
+      const cor = d3.scaleSequential(d3.interpolateBlues)
+                    .domain([0, 100]) // Ajustar o domínio conforme necessário
+                    .clamp(true);
+      return {
+        fillColor: cor(atendimentos),
+        weight: 1,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.8
+      };
+    }
+
+    // Criar camada GeoJSON e adicionar ao mapa
+    L.geoJSON(data, {
+      style: style
+    }).addTo(map);
+  });
+
+</script>
+
 </body>
 </html>
