@@ -108,6 +108,15 @@ legend.onAdd = function(map) {
 
 legend.addTo(map);
 
+// Exemplo de como lidar com eventos de mouse/touch
+map.on('pointermove', function(e) {
+  // Use e.pressure ao invés de e.mozPressure
+  console.log('Pressure:', e.pressure);
+
+  // Use e.pointerType ao invés de e.mozInputSource
+  console.log('Pointer type:', e.pointerType);
+});
+
 </script>
 
 </body>
