@@ -1,48 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa com Leaflet e Mapa de Calor</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <meta charset="UTF-8">
+    <title>Mapa com GeoJSON e Leaflet</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-  <div id="map" style="width: 800px; height: 600px;"></div>
-
-  <script>
-    var map = L.map('map').setView([37.8, -96], 4);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-
-    // Exemplo de dados de atendimentos (latitude, longitude, número de atendimentos)
-    var heatData = [
-      [32.318231, -86.902298, 100],  // Exemplo: Alabama
-      [61.370716, -152.404419, 200], // Exemplo: Alaska
-      // Adicione mais pontos de dados conforme necessário
-    ];
-
-    // Configuração do mapa de calor
-    var heat = L.heatLayer(heatData, {
-      radius: 25,
-      blur: 15,
-      gradient: { 0.4: 'lightblue', 0.65: 'blue', 1: 'darkblue' } // Gradiente de cores
-    }).addTo(map);
-
-    // Carregar o GeoJSON
-    fetch('AL.json')
-      .then(function(response) {
-        return response.json();
-      })
-      .then(function(data) {
-        L.geoJSON(data).addTo(map);
-      })
-      .catch(function(error) {
-        console.error('Erro ao carregar o GeoJSON:', error);
-      });
-  </script>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
