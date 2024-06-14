@@ -66,6 +66,39 @@ function style(feature) {
   };
 }
 
+// Função para exibir informações ao passar o mouse
+function onMouseOver(e) {
+  const layer = e.target;
+  const properties = layer.feature.properties;
+  const atendimentos = properties.ATENDIMENTOS || 0;
+  
+  layer.bindTooltip(`<strong>${properties.NM_MUNICIP}</strong><br>Número de Atendimentos: ${atendimentos}`).openTooltip();
+}
+
+// Função para remover informações ao retirar o mouse
+function onMouseOut(e) {
+  const layer = e.target;
+  layer.closeTooltip();
+}
+
+// Função para exibir informações detalhadas ao clicar
+function onClick(e) {
+  const properties = e.target.feature.properties;
+  const atendimentos = properties.ATENDIMENTOS || 0;
+  
+  const popupContent = `
+    <h3>${properties.NM_MUNICIP}</h3>
+    <p><strong>Número de Atendimentos:</strong> ${atendimentos}</p>
+    <p><strong>ID:</strong> ${properties.ID}</p>
+    <p><strong>CD_GEOCODM:</strong> ${properties.CD_GEOCODM}</p>
+  `;
+  
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(popupContent)
+    .openOn(map);
+}
+
 // Criar o mapa inicializando no centro de Alagoas
 var map = L.map('map').setView([-9.5733, -36.7820], 8);
 
@@ -79,7 +112,14 @@ fetch(geojsonUrl)
   .then(response => response.json())
   .then(data => {
     L.geoJSON(data, {
-      style: style
+      style: style,
+      onEachFeature: function(feature, layer) {
+        layer.on({
+          mouseover: onMouseOver,
+          mouseout: onMouseOut,
+          click: onClick
+        });
+      }
     }).addTo(map);
   });
 
@@ -96,7 +136,7 @@ legend.onAdd = function(map) {
   // Loop through our density intervals and generate a label with a colored square for each interval
   for (let i = 0; i < grades.length; i++) {
     div.innerHTML +=
-      '<i style="background:' + (grades[i] === 0 ? 'transparent' : cor(grades[i])) + '"></i> ' +
+      '<i style="background:' + (grades[i] === 0 ? 'transparent' : style({ properties: { ATENDIMENTOS: grades[i] } }).fillColor) + '"></i> ' +
       grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
   }
   
@@ -107,15 +147,6 @@ legend.onAdd = function(map) {
 };
 
 legend.addTo(map);
-
-// Exemplo de como lidar com eventos de mouse/touch
-map.on('pointermove', function(e) {
-  // Use e.pressure ao invés de e.mozPressure
-  console.log('Pressure:', e.pressure);
-
-  // Use e.pointerType ao invés de e.mozInputSource
-  console.log('Pointer type:', e.pointerType);
-});
 
 </script>
 
