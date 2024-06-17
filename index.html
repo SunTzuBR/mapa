@@ -46,16 +46,12 @@
     }
     .label {
       font-family: Arial, sans-serif;
-      font-size: 12px; /* Tamanho do texto do rótulo */
+      font-size: 10px; /* Tamanho do rótulo ajustado para 10px */
       font-weight: bold;
       text-align: center;
       line-height: 1.2;
       color: black;
-      background-color: rgba(255, 255, 255, 0.8);
-      border-radius: 5px;
-      padding: 3px;
-      border: 1px solid #888;
-      pointer-events: none; /* Impede que o rótulo capture eventos de mouse */
+      pointer-events: none; /* Rótulo não é clicável */
     }
   </style>
 </head>
@@ -202,9 +198,7 @@ fetch(geojsonUrl)
           icon: L.divIcon({
             className: 'label',
             html: municipio,
-            iconSize: [100, 40], // Tamanho fixo do rótulo
-            iconAnchor: [50, 20], // Ponto de ancoragem do ícone
-            interactive: false // Torna o rótulo não interativo
+            iconSize: [100, 40] // Tamanho do ícone ajustado para [100, 40]
           })
         }).addTo(map);
       }
@@ -227,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     highlightSimilarValues(value);
     
     popup.style.display = 'block';
-    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`; // Positioning to the left of the pointer
+    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`; // Posicionamento à esquerda do ponteiro
     popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
     popup.textContent = `Value: ${Math.round(value)}`;
   });
@@ -261,7 +255,7 @@ function resetHighlight(layer) {
     layer.setStyle(style(layer.feature));
   } else {
     map.eachLayer(l => {
-      if (l.feature)
+      if (l.feature) {
         l.setStyle(style(l.feature));
       }
     });
