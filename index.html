@@ -19,7 +19,7 @@
       position: absolute;
       bottom: 30px;
       right: 10px;
-      width: 30px;
+      width: 20px;
       height: 200px;
       background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
       border: 1px solid #ccc;
@@ -207,7 +207,7 @@ function highlightSimilarValues(value) {
   map.eachLayer(layer => {
     if (layer.feature) {
       const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
-      if (Math.abs(atendimentos - value) < 50) {
+      if (Math.abs(atendimentos - value) < 7) {
         layer.setStyle({ weight: 3, color: 'yellow' });
       } else {
         layer.setStyle(style(layer.feature));
