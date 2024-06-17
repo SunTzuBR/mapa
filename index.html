@@ -36,7 +36,6 @@
     #popup {
       position: absolute;
       background-color: yellow;
-      left: -100px;
       padding: 5px;
       border: 1px solid black;
       display: none; /* Initially hidden */
@@ -177,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     highlightSimilarValues(value);
     
     popup.style.display = 'block';
-    popup.style.left = `${pointer.offsetLeft + pointer.offsetWidth + 10}px`;
+    popup.style.left = `${pointer.offsetLeft + pointer.offsetWidth + 10}px`; // Positioning to the right of the pointer
     popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
     popup.textContent = `Value: ${Math.round(value)}`;
   });
