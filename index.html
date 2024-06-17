@@ -19,7 +19,7 @@
       position: absolute;
       bottom: 30px;
       right: 10px;
-      width: 30px;
+      width: 20px;
       height: 200px;
       background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
       border: 1px solid #ccc;
@@ -95,12 +95,14 @@ function onMouseOver(e) {
   const atendimentos = properties.ATENDIMENTOS || 0;
   layer.bindTooltip(`<strong>${properties.NM_MUNICIP}</strong><br>Número de Atendimentos: ${atendimentos}`).openTooltip();
   updatePointer(atendimentos);
+  showPopup(atendimentos, e.originalEvent.pageX, e.originalEvent.pageY);
 }
 
 // Função chamada quando o mouse sai de um estado
 function onMouseOut(e) {
   const layer = e.target;
   layer.closeTooltip();
+  hidePopup();
 }
 
 // Função chamada quando um estado é clicado
@@ -126,10 +128,24 @@ function updatePointer(value) {
   const range = max - min;
   const percentage = (value - min) / range;
   const pointer = document.getElementById('pointer');
-  const popup = document.getElementById('popup');
   const topPosition = (1 - percentage) * 100;
   pointer.style.top = `${topPosition}%`;
   pointer.dataset.value = value;
+}
+
+// Mostra o popup na legenda
+function showPopup(value, x, y) {
+  const popup = document.getElementById('popup');
+  popup.style.display = 'block';
+  popup.style.left = `${x - popup.offsetWidth - 10}px`; // Positioning to the left of the pointer
+  popup.style.top = `${y}px`;
+  popup.textContent = `Value: ${Math.round(value)}`;
+}
+
+// Esconde o popup
+function hidePopup() {
+  const popup = document.getElementById('popup');
+  popup.style.display = 'none';
 }
 
 // Inicializa o mapa
@@ -163,7 +179,6 @@ fetch(geojsonUrl)
 // Mostra o valor quando o mouse passa sobre a legenda
 document.addEventListener('DOMContentLoaded', () => {
   const pointer = document.getElementById('pointer');
-  const popup = document.getElementById('popup');
   const legend = document.querySelector('.legend');
   
   legend.addEventListener('mousemove', (e) => {
@@ -175,14 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Destaque os estados com valores semelhantes
     highlightSimilarValues(value);
     
-    popup.style.display = 'block';
-    popup.style.left = `${pointer.offsetLeft + pointer.offsetWidth + 10}px`;
-    popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
-    popup.textContent = `Value: ${Math.round(value)}`;
+    showPopup(value, e.clientX, e.clientY);
   });
 
   legend.addEventListener('mouseleave', () => {
-    popup.style.display = 'none';
+    hidePopup();
     resetHighlight();
   });
   
