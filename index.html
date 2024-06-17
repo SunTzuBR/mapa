@@ -95,12 +95,21 @@ function onMouseOver(e) {
   const atendimentos = properties.ATENDIMENTOS || 0;
   layer.bindTooltip(`<strong>${properties.NM_MUNICIP}</strong><br>Número de Atendimentos: ${atendimentos}`).openTooltip();
   updatePointer(atendimentos);
+
+  const popup = document.getElementById('popup');
+  popup.style.display = 'block';
+  popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`;
+  popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
+  popup.textContent = `Value: ${atendimentos}`;
 }
 
 // Função chamada quando o mouse sai de um estado
 function onMouseOut(e) {
   const layer = e.target;
   layer.closeTooltip();
+
+  const popup = document.getElementById('popup');
+  popup.style.display = 'none';
 }
 
 // Função chamada quando um estado é clicado
