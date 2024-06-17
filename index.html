@@ -206,7 +206,7 @@ function highlightSimilarValues(value) {
   map.eachLayer(layer => {
     if (layer.feature) {
       const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
-      if (Math.abs(atendimentos - value) < 50) {
+      if (Math.abs(atendimentos - value) < 12) {
         layer.setStyle({ weight: 3, color: 'yellow' });
       } else {
         layer.setStyle(style(layer.feature));
