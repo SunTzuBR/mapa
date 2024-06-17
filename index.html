@@ -35,10 +35,10 @@
     }
     #popup {
       position: absolute;
-      background-color: yellow;
+      background-color: white;
       padding: 5px;
       border: 1px solid black;
-      border-radius: 5px;
+      border-radius: 2px;
       display: none; /* Initially hidden */
       transform: translateY(-50%);
     }
@@ -106,7 +106,7 @@ function onMouseOver(e) {
 
   const popup = document.getElementById('popup');
   popup.style.display = 'block';
-  popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 2}px`;
+  popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 50}px`;
   popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
   popup.textContent = `${atendimentos}`;
 
@@ -164,7 +164,7 @@ function updatePointer(value, isLegend = false) {
   if (isLegend) {
     popup.textContent = `≈ ${Math.round(value)}`;
   } else {
-    popup.textContent = `Value: ${Math.round(value)}`;
+    popup.textContent = ` ${Math.round(value)}`;
   }
 }
 
