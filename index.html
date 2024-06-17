@@ -1,113 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mapa Interativo de Alagoas</title>
+  <title>Mapa</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
     #map {
-      height: 600px;
+      height: 100%;
+      width: 100%;
     }
-    
     .legend {
-      background-color: white;
-      padding: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      width: 30px;
+      height: 200px;
+      background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
+      border: 1px solid #ccc;
       border-radius: 5px;
+      padding: 5px;
     }
-
-    .legend i {
-      width: 20px;
-      height: 20px;
-      float: left;
-      margin-right: 8px;
-      opacity: 0.8;
+    .pointer {
+      position: absolute;
+      left: 0px;
+      width: 30px;
+      height: 2px;
+      background: black;
+    }
+    #popup {
+      position: absolute;
+      background-color: yellow;
+      padding: 5px;
+      border: 1px solid black;
+      display: none; /* Initially hidden */
+      transform: translateY(-50%);
+    }
+    .leaflet-control-attribution {
+      display: none;
     }
   </style>
 </head>
 <body>
 
 <div id="map"></div>
+<div class="legend">
+  <div id="pointer" class="pointer"></div>
+  <div id="popup"></div>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-
-// Seu GeoJSON dos municípios de Alagoas
+// URL do arquivo GeoJSON
 const geojsonUrl = 'AL.json';
 
-// Função para estilizar os polígonos
+// Estilo para os polígonos no mapa
 function style(feature) {
   const atendimentos = feature.properties.ATENDIMENTOS || 0;
-  const cor = d3.scaleSequential(d3.interpolateBlues)
-                .domain([0, 100])  // Ajuste o domínio conforme necessário
-                .clamp(true);
-  
-  // Se atendimentos for 0, retornar sem cor de preenchimento e com borda preta
+  let fillColor;
   if (atendimentos === 0) {
-    return {
-      fillColor: 'transparent',
-      weight: 1,
-      opacity: 1,
-      color: 'black',
-      fillOpacity: 0,
-      dashArray: '3'  // Adiciona uma borda tracejada para diferenciar
-    };
+    fillColor = '#ffffff';
+  } else if (atendimentos < 50) {
+    fillColor = '#01afe7';
+  } else if (atendimentos < 100) {
+    fillColor = '#6495ED';
+  } else if (atendimentos < 200) {
+    fillColor = '#6A5ACD';
+  } else if (atendimentos < 300) {
+    fillColor = '#483D8B';
+  } else if (atendimentos < 400) {
+    fillColor = '#000080';
+  } else {
+    fillColor = '#000033';
   }
-
-  // Caso contrário, aplicar cor baseado nos atendimentos
   return {
-    fillColor: cor(atendimentos),
+    fillColor: fillColor,
     weight: 1,
     opacity: 1,
     color: 'white',
-    fillOpacity: 0.8
+    fillOpacity: 0.8,
   };
 }
 
-// Função para exibir informações ao passar o mouse
+// Função chamada quando o mouse passa sobre um estado
 function onMouseOver(e) {
   const layer = e.target;
   const properties = layer.feature.properties;
   const atendimentos = properties.ATENDIMENTOS || 0;
-  
   layer.bindTooltip(`<strong>${properties.NM_MUNICIP}</strong><br>Número de Atendimentos: ${atendimentos}`).openTooltip();
+  updatePointer(atendimentos);
 }
 
-// Função para remover informações ao retirar o mouse
+// Função chamada quando o mouse sai de um estado
 function onMouseOut(e) {
   const layer = e.target;
   layer.closeTooltip();
 }
 
-// Função para exibir informações detalhadas ao clicar
+// Função chamada quando um estado é clicado
 function onClick(e) {
   const properties = e.target.feature.properties;
   const atendimentos = properties.ATENDIMENTOS || 0;
-  
   const popupContent = `
     <h3>${properties.NM_MUNICIP}</h3>
     <p><strong>Número de Atendimentos:</strong> ${atendimentos}</p>
     <p><strong>ID:</strong> ${properties.ID}</p>
-    <p><strong>CD_GEOCODM:</strong> ${properties.CD_GEOCODM}</p>
+    <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
   `;
-  
   L.popup()
     .setLatLng(e.latlng)
     .setContent(popupContent)
     .openOn(map);
 }
 
-// Criar o mapa inicializando no centro de Alagoas
-var map = L.map('map').setView([-9.5733, -36.7820], 8);
+// Atualiza o ponteiro na legenda
+function updatePointer(value) {
+  const min = 0;
+  const max = 500;
+  const range = max - min;
+  const percentage = (value - min) / range;
+  const pointer = document.getElementById('pointer');
+  const popup = document.getElementById('popup');
+  const topPosition = (1 - percentage) * 100;
+  pointer.style.top = `${topPosition}%`;
+  pointer.dataset.value = value;
+}
 
-// Adicionar camada de mapa base (OpenStreetMap)
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 18,
-}).addTo(map);
+// Inicializa o mapa
+var map = L.map('map', {
+  center: [-9.5733, -36.7820],
+  zoom: 8,
+  layers: [],
+  maxBounds: [
+    [-11, -39],
+    [-7, -34]
+  ],
+  maxBoundsViscosity: 2.0
+});
 
-// Carregar GeoJSON e adicionar ao mapa
+// Carrega o GeoJSON e adiciona ao mapa
 fetch(geojsonUrl)
   .then(response => response.json())
   .then(data => {
@@ -123,31 +160,22 @@ fetch(geojsonUrl)
     }).addTo(map);
   });
 
-// Criar a legenda
-const legend = L.control({ position: 'bottomright' });
-
-legend.onAdd = function(map) {
-  const div = L.DomUtil.create('div', 'info legend');
-  const grades = [0, 20, 40, 60, 80, 100]; // Valores da escala
-  const labels = [];
-
-  div.innerHTML = '<h4>Atendimentos</h4>';
-  
-  // Loop through our density intervals and generate a label with a colored square for each interval
-  for (let i = 0; i < grades.length; i++) {
-    div.innerHTML +=
-      '<i style="background:' + (grades[i] === 0 ? 'transparent' : style({ properties: { ATENDIMENTOS: grades[i] } }).fillColor) + '"></i> ' +
-      grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-  }
-  
-  // Adiciona a representação para 0 atendimentos
-  div.innerHTML += '<i style="background: transparent"></i> 0 (sem atendimentos)';
-
-  return div;
-};
-
-legend.addTo(map);
-
+// Mostra o valor quando o mouse passa sobre a legenda
+document.addEventListener('DOMContentLoaded', () => {
+  const pointer = document.getElementById('pointer');
+  const popup = document.getElementById('popup');
+  pointer.addEventListener('mouseover', () => {
+    popup.style.display = 'block';
+    popup.style.left = `${pointer.offsetLeft + pointer.offsetWidth + 10}px`;
+    popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
+    popup.textContent = `Value: ${pointer.dataset.value}`;
+  });
+  pointer.addEventListener('mouseout', () => {
+    popup.style.display = 'none';
+  });
+  // Exemplo inicial para testar a função
+  updatePointer(250);
+});
 </script>
 
 </body>
