@@ -149,7 +149,7 @@ function onClick(e) {
 }
 
 // Atualiza o ponteiro na legenda
-function updatePointer(value) {
+function updatePointer(value, isLegend = false) {
   const min = 0;
   const max = 500;
   const range = max - min;
@@ -159,6 +159,12 @@ function updatePointer(value) {
   const topPosition = (1 - percentage) * 100;
   pointer.style.top = `${topPosition}%`;
   pointer.dataset.value = value;
+
+  if (isLegend) {
+    popup.textContent = `≈ ${Math.round(value)}`;
+  } else {
+    popup.textContent = `Value: ${Math.round(value)}`;
+  }
 }
 
 // Inicializa o mapa
@@ -199,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const legendHeight = legend.clientHeight;
     const mouseY = e.clientY - legend.getBoundingClientRect().top;
     const value = ((legendHeight - mouseY) / legendHeight) * 500;
-    updatePointer(value);
+    updatePointer(value, true);
 
     // Destaque os estados com valores semelhantes
     highlightSimilarValues(value);
@@ -207,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
     popup.style.display = 'block';
     popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`; // Positioning to the left of the pointer
     popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
-    popup.textContent = `Value: ${Math.round(value)}`;
   });
 
   legend.addEventListener('mouseleave', () => {
@@ -216,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   // Exemplo inicial para testar a função
-  updatePointer(250);
+  updatePointer(250, true);
 });
 
 // Destaca áreas com valores semelhantes
