@@ -164,18 +164,54 @@ fetch(geojsonUrl)
 document.addEventListener('DOMContentLoaded', () => {
   const pointer = document.getElementById('pointer');
   const popup = document.getElementById('popup');
-  pointer.addEventListener('mouseover', () => {
+  const legend = document.querySelector('.legend');
+  
+  legend.addEventListener('mousemove', (e) => {
+    const legendHeight = legend.clientHeight;
+    const mouseY = e.clientY - legend.getBoundingClientRect().top;
+    const value = ((legendHeight - mouseY) / legendHeight) * 500;
+    updatePointer(value);
+
+    // Destaque os estados com valores semelhantes
+    highlightSimilarValues(value);
+    
     popup.style.display = 'block';
     popup.style.left = `${pointer.offsetLeft + pointer.offsetWidth + 10}px`;
     popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
-    popup.textContent = `Value: ${pointer.dataset.value}`;
+    popup.textContent = `Value: ${Math.round(value)}`;
   });
-  pointer.addEventListener('mouseout', () => {
+
+  legend.addEventListener('mouseleave', () => {
     popup.style.display = 'none';
+    resetHighlight();
   });
+  
   // Exemplo inicial para testar a função
   updatePointer(250);
 });
+
+// Destaca áreas com valores semelhantes
+function highlightSimilarValues(value) {
+  map.eachLayer(layer => {
+    if (layer.feature) {
+      const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
+      if (Math.abs(atendimentos - value) < 50) {
+        layer.setStyle({ weight: 3, color: 'yellow' });
+      } else {
+        layer.setStyle(style(layer.feature));
+      }
+    }
+  });
+}
+
+// Restaura o estilo original das áreas destacadas
+function resetHighlight() {
+  map.eachLayer(layer => {
+    if (layer.feature) {
+      layer.setStyle(style(layer.feature));
+    }
+  });
+}
 </script>
 
 </body>
