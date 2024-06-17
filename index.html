@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mapa</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+    .legend {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      width: 20px;
+      height: 200px;
+      background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
+      border: 1px solid #ccc;
+      padding: 5px;
+    }
+    .pointer {
+      position: absolute;
+      left: 0px;
+      width: 30px;
+      height: 2px;
+      border-radius: 10px;
+      background: black;
+    }
+    #popup {
+      position: absolute;
+      background-color: white;
+      padding: 5px;
+      border: 1px solid black;
+      border-radius: 2px;
+      display: none; /* Initially hidden */
+      transform: translateY(-50%);
+    }
+    .leaflet-control-attribution {
+      display: none;
+    }
+    /* Estilo dos polígonos */
+    .leaflet-clickable {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map">
+<img id="logo" src="logo.png">
+</div>
+<div class="legend">
+  <div id="pointer" class="pointer"></div>
+  <div id="popup"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// URL do arquivo GeoJSON
+const geojsonUrl = 'AL.json';
+
+// Estilo para os polígonos no mapa
+function style(feature) {
+  const atendimentos = feature.properties.ATENDIMENTOS || 0;
+  let fillColor, color = 'white', dashArray = null;
+  if (atendimentos === 0) {
+    fillColor = '#ffffff';
+    color = 'black';
+    dashArray = '3'; // linha tracejada
+  } else if (atendimentos < 50) {
+    fillColor = '#01afe7';
+  } else if (atendimentos < 100) {
+    fillColor = '#6495ED';
+  } else if (atendimentos < 200) {
+    fillColor = '#6A5ACD';
+  } else if (atendimentos < 300) {
+    fillColor = '#483D8B';
+  } else if (atendimentos < 400) {
+    fillColor = '#000080';
+  } else {
+    fillColor = '#000033';
+  }
+  return {
+    fillColor: fillColor,
+    weight: 1,
+    opacity: 1,
+    color: color,
+    fillOpacity: 0.8,
+    dashArray: dashArray
+  };
+}
+
+// Função chamada quando o mouse passa sobre um estado
+function onMouseOver(e) {
+  const layer = e.target;
+  const properties = layer.feature.properties;
+  const atendimentos = properties.ATENDIMENTOS || 0;
+  layer.bindTooltip(`<strong>${properties.NM_MUNICIP}</strong><br>Número de Atendimentos: ${atendimentos}`).openTooltip();
+  updatePointer(atendimentos);
+
+  const popup = document.getElementById('popup');
+  popup.style.display = 'block';
+  popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`;
+  popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
+  popup.textContent = `${atendimentos}`;
+
+  // Muda o estilo do polígono ao passar o mouse
+  layer.setStyle({
+    weight: 3,
+    color: 'yellow',
+    dashArray: null,
+    fillOpacity: 0.9
+  });
+
+  if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+    layer.bringToFront();
+  }
+}
+
+// Função chamada quando o mouse sai de um estado
+function onMouseOut(e) {
+  const layer = e.target;
+  layer.closeTooltip();
+  resetHighlight(layer);
+
+  const popup = document.getElementById('popup');
+  popup.style.display = 'none';
+}
+
+// Função chamada quando um estado é clicado
+function onClick(e) {
+  const properties = e.target.feature.properties;
+  const atendimentos = properties.ATENDIMENTOS || 0;
+  const popupContent = `
+    <h3>${properties.NM_MUNICIP}</h3>
+    <p><strong>Número de Atendimentos:</strong> ${atendimentos}</p>
+    <p><strong>ID:</strong> ${properties.ID}</p>
+    <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
+  `;
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(popupContent)
+    .openOn(map);
+}
+
+// Atualiza o ponteiro na legenda
+function updatePointer(value, isLegend = false) {
+  const min = 0;
+  const max = 500;
+  const range = max - min;
+  const percentage = (value - min) / range;
+  const pointer = document.getElementById('pointer');
+  const popup = document.getElementById('popup');
+  const topPosition = (1 - percentage) * 100;
+  pointer.style.top = `${topPosition}%`;
+  pointer.dataset.value = value;
+
+  if (isLegend) {
+    popup.textContent = `≈ ${Math.round(value)}`;
+  } else {
+    popup.textContent = ` ${Math.round(value)}`;
+  }
+}
+
+// Inicializa o mapa
+var map = L.map('map', {
+  center: [-9.5733, -36.7820],
+  zoom: 8,
+  layers: [],
+  maxBounds: [
+    [-11, -39],
+    [-7, -34]
+  ],
+  maxBoundsViscosity: 2.0
+});
+
+// Carrega o GeoJSON e adiciona ao mapa
+fetch(geojsonUrl)
+  .then(response => response.json())
+  .then(data => {
+    L.geoJSON(data, {
+      style: style,
+      onEachFeature: function(feature, layer) {
+        layer.on({
+          mouseover: onMouseOver,
+          mouseout: onMouseOut,
+          click: onClick
+        });
+      }
+    }).addTo(map);
+  });
+
+// Mostra o valor quando o mouse passa sobre a legenda
+document.addEventListener('DOMContentLoaded', () => {
+  const pointer = document.getElementById('pointer');
+  const popup = document.getElementById('popup');
+  const legend = document.querySelector('.legend');
+  
+  legend.addEventListener('mousemove', (e) => {
+    const legendHeight = legend.clientHeight;
+    const mouseY = e.clientY - legend.getBoundingClientRect().top;
+    const value = ((legendHeight - mouseY) / legendHeight) * 500;
+    updatePointer(value, true);
+
+    // Destaque os estados com valores semelhantes
+    highlightSimilarValues(value);
+    
+    popup.style.display = 'block';
+    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`; // Positioning to the left of the pointer
+    popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
+  });
+
+  legend.addEventListener('mouseleave', () => {
+    popup.style.display = 'none';
+    resetHighlight();
+  });
+  
+  // Exemplo inicial para testar a função
+  updatePointer(250, true);
+});
+
+// Destaca áreas com valores semelhantes
+function highlightSimilarValues(value) {
+  map.eachLayer(layer => {
+    if (layer.feature) {
+      const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
+      if (Math.abs(atendimentos - value) < 10) {
+        layer.setStyle({ weight: 3, color: 'yellow' });
+      } else {
+        layer.setStyle(style(layer.feature));
+      }
+    }
+  });
+}
+
+// Restaura o estilo original das áreas destacadas
+function resetHighlight(layer) {
+  if (layer) {
+    layer.setStyle(style(layer.feature));
+  } else {
+    map.eachLayer(l => {
+      if (l.feature) {
+        l.setStyle(style(l.feature));
+      }
+    });
+  }
+}
+</script>
+
+</body>
+</html>
