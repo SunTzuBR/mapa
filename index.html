@@ -46,14 +46,15 @@
     }
     .label {
       font-family: Arial, sans-serif;
-      font-size: 10px; /* Tamanho do rótulo ajustado para 10px */
+      font-size: 6px;
       font-weight: bold;
       text-align: center;
       line-height: 1.2;
       color: black;
-      pointer-events: none; /* Rótulo não captura eventos de clique */
-      z-index: 400; /* Z-index menor para ficar abaixo dos polígonos */
-      margin-top: -20px; /* Deslocamento vertical negativo para ficar acima do mapa */
+     /* background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 5px;
+      padding: 3px;
+      border: 1px solid #888;*/
     }
   </style>
 </head>
@@ -200,7 +201,7 @@ fetch(geojsonUrl)
           icon: L.divIcon({
             className: 'label',
             html: municipio,
-            iconSize: [100, 40] // Tamanho do ícone ajustado para [100, 40]
+            iconSize: [100, 40]
           })
         }).addTo(map);
       }
@@ -223,13 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
     highlightSimilarValues(value);
     
     popup.style.display = 'block';
-    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`; // Posicionamento à esquerda do ponteiro
+    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`; // Positioning to the left of the pointer
     popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
     popup.textContent = `Value: ${Math.round(value)}`;
   });
 
   legend.addEventListener('mouseleave', () => {
-   
     popup.style.display = 'none';
     resetHighlight();
   });
