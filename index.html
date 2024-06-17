@@ -19,7 +19,7 @@
       position: absolute;
       bottom: 30px;
       right: 10px;
-      width: 30px;
+      width: 20px;
       height: 200px;
       background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
       border: 1px solid #ccc;
@@ -35,7 +35,7 @@
     }
     #popup {
       position: absolute;
-      background-color: yellow;
+      background-color: white;
       padding: 5px;
       border: 1px solid black;
       display: none; /* Initially hidden */
@@ -66,6 +66,8 @@ function style(feature) {
   let fillColor;
   if (atendimentos === 0) {
     fillColor = '#ffffff';
+    color = 'black';
+    dashArray = '3';
   } else if (atendimentos < 50) {
     fillColor = '#01afe7';
   } else if (atendimentos < 100) {
