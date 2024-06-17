@@ -46,15 +46,16 @@
     }
     .label {
       font-family: Arial, sans-serif;
-      font-size: 6px;
+      font-size: 12px; /* Tamanho do texto do rótulo */
       font-weight: bold;
       text-align: center;
       line-height: 1.2;
       color: black;
-     /* background-color: rgba(255, 255, 255, 0.8);
+      background-color: rgba(255, 255, 255, 0.8);
       border-radius: 5px;
       padding: 3px;
-      border: 1px solid #888;*/
+      border: 1px solid #888;
+      pointer-events: none; /* Impede que o rótulo capture eventos de mouse */
     }
   </style>
 </head>
@@ -201,7 +202,9 @@ fetch(geojsonUrl)
           icon: L.divIcon({
             className: 'label',
             html: municipio,
-            iconSize: [100, 40]
+            iconSize: [100, 40], // Tamanho fixo do rótulo
+            iconAnchor: [50, 20], // Ponto de ancoragem do ícone
+            interactive: false // Torna o rótulo não interativo
           })
         }).addTo(map);
       }
@@ -258,7 +261,7 @@ function resetHighlight(layer) {
     layer.setStyle(style(layer.feature));
   } else {
     map.eachLayer(l => {
-      if (l.feature) {
+      if (l.feature)
         l.setStyle(style(l.feature));
       }
     });
