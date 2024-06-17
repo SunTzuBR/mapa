@@ -209,3 +209,62 @@ fetch(geojsonUrl)
   });
 
 // Mostra o valor quando o mouse passa sobre a legenda
+document.addEventListener('DOMContentLoaded', () => {
+  const pointer = document.getElementById('pointer');
+  const popup = document.getElementById('popup');
+  const legend = document.querySelector('.legend');
+  
+  legend.addEventListener('mousemove', (e) => {
+    const legendHeight = legend.clientHeight;
+    const mouseY = e.clientY - legend.getBoundingClientRect().top;
+    const value = ((legendHeight - mouseY) / legendHeight) * 500;
+    updatePointer(value);
+
+    // Destaque os estados com valores semelhantes
+    highlightSimilarValues(value);
+    
+    popup.style.display = 'block';
+    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`; // Positioning to the left of the pointer
+    popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
+    popup.textContent = `Value: ${Math.round(value)}`;
+  });
+
+  legend.addEventListener('mouseleave', () => {
+    popup.style.display = 'none';
+    resetHighlight();
+  });
+  
+  // Exemplo inicial para testar a função
+  updatePointer(250);
+});
+
+// Destaca áreas com valores semelhantes
+function highlightSimilarValues(value) {
+  map.eachLayer(layer => {
+    if (layer.feature) {
+      const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
+      if (Math.abs(atendimentos - value) < 10) {
+        layer.setStyle({ weight: 3, color: 'yellow' });
+      } else {
+        layer.setStyle(style(layer.feature));
+      }
+    }
+  });
+}
+
+// Restaura o estilo original das áreas destacadas
+function resetHighlight(layer) {
+  if (layer) {
+    layer.setStyle(style(layer.feature));
+  } else {
+    map.eachLayer(l => {
+      if (l.feature) {
+        l.setStyle(style(l.feature));
+      }
+    });
+  }
+}
+</script>
+
+</body>
+</html>
