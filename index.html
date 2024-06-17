@@ -23,7 +23,6 @@
       height: 200px;
       background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
       border: 1px solid #ccc;
-      border-radius: 10px;
       padding: 5px;
     }
     .pointer {
@@ -39,7 +38,7 @@
       background-color: yellow;
       padding: 5px;
       border: 1px solid black;
-      border-radius: 10px;
+      border-radius: 5px;
       display: none; /* Initially hidden */
       transform: translateY(-50%);
     }
@@ -213,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     highlightSimilarValues(value);
     
     popup.style.display = 'block';
-    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`; // Positioning to the left of the pointer
+    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 0}px`; // Positioning to the left of the pointer
     popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
   });
 
