@@ -52,6 +52,8 @@
       line-height: 1.2;
       color: black;
       pointer-events: none; /* Rótulo não captura eventos de clique */
+      z-index: 400; /* Z-index menor para ficar abaixo dos polígonos */
+      margin-top: -20px; /* Deslocamento vertical negativo para ficar acima do mapa */
     }
   </style>
 </head>
@@ -227,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   legend.addEventListener('mouseleave', () => {
+   
     popup.style.display = 'none';
     resetHighlight();
   });
