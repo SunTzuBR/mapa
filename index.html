@@ -19,7 +19,7 @@
       position: absolute;
       bottom: 30px;
       right: 10px;
-      width: 20px;
+      width: 30px;
       height: 200px;
       background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
       border: 1px solid #ccc;
@@ -35,7 +35,7 @@
     }
     #popup {
       position: absolute;
-      background-color: white;
+      background-color: yellow;
       padding: 5px;
       border: 1px solid black;
       display: none; /* Initially hidden */
@@ -60,18 +60,14 @@
 // URL do arquivo GeoJSON
 const geojsonUrl = 'AL.json';
 
-  let fillColor;
-  let color = 'white';
-  let weight = 1;
-  let dashArray = null;
 // Estilo para os polígonos no mapa
 function style(feature) {
   const atendimentos = feature.properties.ATENDIMENTOS || 0;
-  let fillColor;
+  let fillColor, color = 'white', dashArray = null;
   if (atendimentos === 0) {
     fillColor = '#ffffff';
     color = 'black';
-    dashArray = '3';
+    dashArray = '3'; // linha tracejada
   } else if (atendimentos < 50) {
     fillColor = '#01afe7';
   } else if (atendimentos < 100) {
@@ -89,8 +85,9 @@ function style(feature) {
     fillColor: fillColor,
     weight: 1,
     opacity: 1,
-    color: 'white',
+    color: color,
     fillOpacity: 0.8,
+    dashArray: dashArray
   };
 }
 
@@ -210,7 +207,7 @@ function highlightSimilarValues(value) {
   map.eachLayer(layer => {
     if (layer.feature) {
       const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
-      if (Math.abs(atendimentos - value) < 12) {
+      if (Math.abs(atendimentos - value) < 50) {
         layer.setStyle({ weight: 3, color: 'yellow' });
       } else {
         layer.setStyle(style(layer.feature));
