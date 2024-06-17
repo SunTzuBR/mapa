@@ -44,17 +44,9 @@
     .leaflet-control-attribution {
       display: none;
     }
-    .label {
-      font-family: Arial, sans-serif;
-      font-size: 6px;
-      font-weight: bold;
-      text-align: center;
-      line-height: 1.2;
-      color: black;
-     /* background-color: rgba(255, 255, 255, 0.8);
-      border-radius: 5px;
-      padding: 3px;
-      border: 1px solid #888;*/
+    /* Estilo dos polígonos */
+    .leaflet-clickable {
+      cursor: pointer;
     }
   </style>
 </head>
@@ -193,17 +185,6 @@ fetch(geojsonUrl)
           mouseout: onMouseOut,
           click: onClick
         });
-
-        // Adiciona um rótulo com o nome do município
-        const municipio = feature.properties.NM_MUNICIP;
-        const center = layer.getBounds().getCenter();
-        const label = L.marker(center, {
-          icon: L.divIcon({
-            className: 'label',
-            html: municipio,
-            iconSize: [100, 40]
-          })
-        }).addTo(map);
       }
     }).addTo(map);
   });
