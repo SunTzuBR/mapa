@@ -19,7 +19,7 @@
       position: absolute;
       bottom: 30px;
       right: 10px;
-      width: 20px;
+      width: 30px;
       height: 200px;
       background: linear-gradient(to top, #01afe7, #6495ED, #6A5ACD, #483D8B, #000080, #000033);
       border: 1px solid #ccc;
@@ -104,12 +104,25 @@ function onMouseOver(e) {
   popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 10}px`;
   popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
   popup.textContent = `Value: ${atendimentos}`;
+
+  // Muda o estilo do polígono ao passar o mouse
+  layer.setStyle({
+    weight: 3,
+    color: 'yellow',
+    dashArray: null,
+    fillOpacity: 0.9
+  });
+
+  if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+    layer.bringToFront();
+  }
 }
 
 // Função chamada quando o mouse sai de um estado
 function onMouseOut(e) {
   const layer = e.target;
   layer.closeTooltip();
+  resetHighlight(layer);
 
   const popup = document.getElementById('popup');
   popup.style.display = 'none';
@@ -207,7 +220,7 @@ function highlightSimilarValues(value) {
   map.eachLayer(layer => {
     if (layer.feature) {
       const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
-      if (Math.abs(atendimentos - value) < 7) {
+      if (Math.abs(atendimentos - value) < 50) {
         layer.setStyle({ weight: 3, color: 'yellow' });
       } else {
         layer.setStyle(style(layer.feature));
@@ -217,12 +230,16 @@ function highlightSimilarValues(value) {
 }
 
 // Restaura o estilo original das áreas destacadas
-function resetHighlight() {
-  map.eachLayer(layer => {
-    if (layer.feature) {
-      layer.setStyle(style(layer.feature));
-    }
-  });
+function resetHighlight(layer) {
+  if (layer) {
+    layer.setStyle(style(layer.feature));
+  } else {
+    map.eachLayer(l => {
+      if (l.feature) {
+        l.setStyle(style(l.feature));
+      }
+    });
+  }
 }
 </script>
 
