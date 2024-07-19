@@ -1,3 +1,8 @@
+Vamos adicionar um ícone de lápis discreto ao popup que, quando clicado, revelará a caixa de edição e o botão para salvar. Vou atualizar o código para incluir o ícone e as funcionalidades associadas.
+
+Aqui está a versão atualizada do código:
+
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -57,8 +62,17 @@
     .leaflet-clickable {
       cursor: pointer;
     }
+    /* Estilo para o ícone de lápis */
+    .edit-icon {
+      cursor: pointer;
+      font-size: 16px;
+      color: #333;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
     /* Estilo para o formulário de edição */
     .edit-container {
+      display: none;
       margin-top: 10px;
     }
     .edit-container input {
@@ -165,10 +179,13 @@ function onClick(e) {
   selectedLayer = e.target;
   const popupContent = `
     <h3>${properties.NM_MUNICIP}</h3>
-    <p><strong>Número de Atendimentos:</strong></p>
-    <input type="number" id="atendimentosInput" value="${atendimentos}" />
-    <button id="saveButton">Salvar</button>
-    <button id="cancelButton">Cancelar</button>
+    <p><strong>Número de Atendimentos:</strong> <span id="atendimentosValue">${atendimentos}</span>
+    <span class="edit-icon" onclick="toggleEditMode()">✎</span></p>
+    <div id="editContainer" class="edit-container">
+      <input type="number" id="atendimentosInput" value="${atendimentos}" />
+      <button id="saveButton">Salvar</button>
+      <button id="cancelButton">Cancelar</button>
+    </div>
     <p><strong>ID:</strong> ${properties.ID}</p>
     <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
   `;
@@ -178,8 +195,8 @@ function onClick(e) {
     .openOn(map);
 
   // Adiciona event listeners para os botões
-  document.getElementById('saveButton').addEventListener('click', saveChanges);
-  document.getElementById('cancelButton').addEventListener('click', cancelEdit);
+  document.getElementById('saveButton')?.addEventListener('click', saveChanges);
+  document.getElementById('cancelButton')?.addEventListener('click', cancelEdit);
 }
 
 // Função para salvar as alterações
@@ -191,33 +208,28 @@ function saveChanges() {
     updatePointer(newAtendimentos);
     
     // Atualiza o conteúdo do popup
-    const popup = L.popup()
-      .setLatLng(selectedLayer.getLatLng())
-      .setContent(`
-        <h3>${selectedLayer.feature.properties.NM_MUNICIP}</h3>
-        <p><strong>Número de Atendimentos:</strong> ${newAtendimentos}</p>
-        <p><strong>ID:</strong> ${selectedLayer.feature.properties.ID}</p>
-        <p><strong>Coordenadas:</strong> ${selectedLayer.feature.properties.CD_GEOCODM}</p>
-      `)
-      .openOn(map);
+    document.getElementById('atendimentosValue').textContent = newAtendimentos;
+    toggleEditMode(false);
   }
 }
 
 // Função para cancelar a edição
 function cancelEdit() {
-  // Reabre o popup original (ou apenas fecha o popup atual)
-  if (selectedLayer) {
-    const properties = selectedLayer.feature.properties;
-    const atendimentos = properties.ATENDIMENTOS || 0;
-    const popup = L.popup()
-      .setLatLng(selectedLayer.getLatLng())
-      .setContent(`
-        <h3>${properties.NM_MUNICIP}</h3>
-        <p><strong>Número de Atendimentos:</strong> ${atendimentos}</p>
-        <p><strong>ID:</strong> ${properties.ID}</p>
-        <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
-      `)
-      .openOn(map);
+  toggleEditMode(false);
+}
+
+// Função para alternar o modo de edição
+function toggleEditMode(edit = true) {
+  const editContainer = document.getElementById('editContainer');
+  const atendimentosValue = document.getElementById('atendimentosValue');
+  const editIcon = document.querySelector('.edit-icon');
+  
+  if (edit) {
+    editContainer.style.display = 'block';
+    atendimentosValue.style.display = 'none';
+  } else {
+    editContainer.style.display = 'none';
+    atendimentosValue.style.display = 'inline';
   }
 }
 
@@ -249,7 +261,8 @@ var map = L.map('map', {
     [-11, -39],
     [-7, -34]
   ],
-  maxBoundsViscosity: 2.0
+  maxBoundsViscosity: 2
+    2.0
 });
 
 // Carrega o GeoJSON e adiciona ao mapa
