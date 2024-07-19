@@ -165,7 +165,7 @@
     event.stopPropagation(); // Evita que o clique no botão também feche o popup
     const layer = findLayerById(id);
     if (layer) {
-      const newAtendimentos = prompt(`Editar número de atendimentos para o município com ID ${id}`, layer.feature.properties.ATENDIMENTOS);
+      const newAtendimentos = prompt(`Editar número de atendimentos para o município com ID ${NM_MUNICIP}`, layer.feature.properties.ATENDIMENTOS);
       if (newAtendimentos !== null) {
         layer.feature.properties.ATENDIMENTOS = parseInt(newAtendimentos, 10);
         layer.setStyle(style(layer.feature));
