@@ -44,7 +44,7 @@
     #popup {
       position: absolute;
       background-color: white;
-      padding: 5px;
+      padding: 10px;
       border: 1px solid black;
       border-radius: 2px;
       display: none;
@@ -55,6 +55,12 @@
     }
     .leaflet-clickable {
       cursor: pointer;
+    }
+    .edit-button {
+      margin-top: 10px;
+      cursor: pointer;
+      color: blue;
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -72,7 +78,7 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
   const geojsonUrl = 'AL.json';
-  let geojsonData = {}; // Variável para armazenar o GeoJSON
+  let geojsonData = {};
 
   function style(feature) {
     const atendimentos = feature.properties.ATENDIMENTOS || 0;
@@ -142,27 +148,50 @@
     const properties = e.target.feature.properties;
     const atendimentos = properties.ATENDIMENTOS || 0;
 
-    // Prompt para editar o valor de atendimentos
-    const newAtendimentos = prompt(`Editar número de atendimentos para ${properties.NM_MUNICIP}`, atendimentos);
-    if (newAtendimentos !== null) {
-      // Atualiza o valor
-      e.target.feature.properties.ATENDIMENTOS = parseInt(newAtendimentos, 10);
+    const popupContent = `
+      <h3>${properties.NM_MUNICIP}</h3>
+      <p><strong>Número de Atendimentos:</strong> ${atendimentos}</p>
+      <p><strong>ID:</strong> ${properties.ID}</p>
+      <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
+      <button class="edit-button" onclick="editAtendimentos(event, ${properties.ID})">Editar</button>
+    `;
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent(popupContent)
+      .openOn(map);
+  }
 
-      // Atualiza o estilo do polígono
-      e.target.setStyle(style(e.target.feature));
-
-      // Atualiza o popup
-      const popupContent = `
-        <h3>${properties.NM_MUNICIP}</h3>
-        <p><strong>Número de Atendimentos:</strong> ${e.target.feature.properties.ATENDIMENTOS}</p>
-        <p><strong>ID:</strong> ${properties.ID}</p>
-        <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
-      `;
-      L.popup()
-        .setLatLng(e.latlng)
-        .setContent(popupContent)
-        .openOn(map);
+  function editAtendimentos(event, id) {
+    event.stopPropagation(); // Evita que o clique no botão também feche o popup
+    const layer = findLayerById(id);
+    if (layer) {
+      const newAtendimentos = prompt(`Editar número de atendimentos para o município com ID ${id}`, layer.feature.properties.ATENDIMENTOS);
+      if (newAtendimentos !== null) {
+        layer.feature.properties.ATENDIMENTOS = parseInt(newAtendimentos, 10);
+        layer.setStyle(style(layer.feature));
+        const popupContent = `
+          <h3>${layer.feature.properties.NM_MUNICIP}</h3>
+          <p><strong>Número de Atendimentos:</strong> ${layer.feature.properties.ATENDIMENTOS}</p>
+          <p><strong>ID:</strong> ${layer.feature.properties.ID}</p>
+          <p><strong>Coordenadas:</strong> ${layer.feature.properties.CD_GEOCODM}</p>
+          <button class="edit-button" onclick="editAtendimentos(event, ${layer.feature.properties.ID})">Editar</button>
+        `;
+        L.popup()
+          .setLatLng(layer.getBounds().getCenter()) // Reposiciona o popup
+          .setContent(popupContent)
+          .openOn(map);
+      }
     }
+  }
+
+  function findLayerById(id) {
+    let foundLayer = null;
+    map.eachLayer(layer => {
+      if (layer.feature && layer.feature.properties.ID === id) {
+        foundLayer = layer;
+      }
+    });
+    return foundLayer;
   }
 
   function updatePointer(value, isLegend = false) {
@@ -197,7 +226,7 @@
   fetch(geojsonUrl)
     .then(response => response.json())
     .then(data => {
-      geojsonData = data; // Armazena o GeoJSON
+      geojsonData = data;
       L.geoJSON(data, {
         style: style,
         onEachFeature: function(feature, layer) {
@@ -224,6 +253,7 @@
       highlightSimilarValues(value);
       
       popup.style.display = 'block';
+      popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px
       popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`;
       popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
     });
@@ -233,6 +263,7 @@
       resetHighlight();
     });
     
+    // Exemplo inicial para testar a função
     updatePointer(250, true);
   });
 
