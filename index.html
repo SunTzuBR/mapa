@@ -78,7 +78,7 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
   const geojsonUrl = 'AL.json';
-  let geojsonData = {};
+  let geojsonLayer = null;
 
   function style(feature) {
     const atendimentos = feature.properties.ATENDIMENTOS || 0;
@@ -226,8 +226,7 @@
   fetch(geojsonUrl)
     .then(response => response.json())
     .then(data => {
-      geojsonData = data;
-      L.geoJSON(data, {
+      geojsonLayer = L.geoJSON(data, {
         style: style,
         onEachFeature: function(feature, layer) {
           layer.on({
@@ -253,7 +252,6 @@
       highlightSimilarValues(value);
       
       popup.style.display = 'block';
-      popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px
       popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`;
       popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
     });
@@ -262,8 +260,7 @@
       popup.style.display = 'none';
       resetHighlight();
     });
-    
-    // Exemplo inicial para testar a função
+
     updatePointer(250, true);
   });
 
