@@ -17,10 +17,10 @@
     }
     #logo {
       position: absolute;
-      height: 30px; /* Altura da logo */
-      width: 50px; /* Largura da logo */
-      top: 20px; /* Distância do topo */
-      left: 700px; /* Distância da esquerda */
+      height: 30px;
+      width: 50px;
+      top: 20px;
+      left: 700px;
     }
     .legend {
       position: absolute;
@@ -50,6 +50,24 @@
       display: none; /* Initially hidden */
       max-width: 250px;
     }
+    #info-content {
+      margin-bottom: 10px;
+    }
+    .edit-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .edit-button:hover {
+      background-color: #45a049;
+    }
+    .edit-button:disabled {
+      background-color: #c0c0c0;
+      cursor: not-allowed;
+    }
     .leaflet-control-attribution {
       display: none;
     }
@@ -70,7 +88,8 @@
 </div>
 <div id="info">
   <div id="info-content"></div>
-  <button id="edit-button" style="display: none;">Salvar</button>
+  <button id="edit-button" class="edit-button" style="display: none;">Editar</button>
+  <button id="save-button" class="edit-button" style="display: none;">Salvar</button>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -148,8 +167,9 @@
     const infoDiv = document.getElementById('info');
     const infoContent = document.getElementById('info-content');
     const editButton = document.getElementById('edit-button');
+    const saveButton = document.getElementById('save-button');
 
-    // Mostrar informações e campo de edição
+    // Mostrar informações e botão de edição
     infoDiv.style.display = 'block';
     infoDiv.style.left = `${e.originalEvent.pageX + 10}px`;
     infoDiv.style.top = `${e.originalEvent.pageY + 10}px`;
@@ -161,20 +181,12 @@
       <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
     `;
 
-    editButton.style.display = 'block';
-    editButton.onclick = () => saveEdits(properties.ID);
+    editButton.style.display = 'inline';
+    saveButton.style.display = 'inline';
 
-    // Atualizar estilo da camada
-    e.target.setStyle({
-      weight: 3,
-      color: 'yellow',
-      dashArray: null,
-      fillOpacity: 0.9
-    });
-
-    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-      e.target.bringToFront();
-    }
+    // Desativa o botão de edição se o modo de edição estiver ativo
+    editButton.disabled = true;
+    saveButton.onclick = () => saveEdits(properties.ID);
   }
 
   function saveEdits(id) {
