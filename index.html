@@ -17,10 +17,10 @@
     }
     #logo {
       position: absolute;
-      height: 30px;
-      width: 50px;
-      top: 20px;
-      left: 700px;
+      height: 30px; /* Altura da logo */
+      width: 50px; /* Largura da logo */
+      top: 20px; /* Distância do topo */
+      left: 700px; /* Distância da esquerda */
     }
     .legend {
       position: absolute;
@@ -41,26 +41,20 @@
       border-radius: 10px;
       background: black;
     }
-    #popup {
+    #info {
       position: absolute;
       background-color: white;
       padding: 10px;
       border: 1px solid black;
-      border-radius: 2px;
-      display: none;
-      transform: translateY(-50%);
+      border-radius: 5px;
+      display: none; /* Initially hidden */
+      max-width: 250px;
     }
     .leaflet-control-attribution {
       display: none;
     }
     .leaflet-clickable {
       cursor: pointer;
-    }
-    .edit-button {
-      margin-top: 10px;
-      cursor: pointer;
-      color: blue;
-      text-decoration: underline;
     }
   </style>
 </head>
@@ -74,11 +68,15 @@
 <div id="logo">
   <img src="logo.png" alt="Logo da Empresa">
 </div>
+<div id="info">
+  <div id="info-content"></div>
+  <button id="edit-button" style="display: none;">Salvar</button>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
   const geojsonUrl = 'AL.json';
-  let geojsonLayer = null;
 
   function style(feature) {
     const atendimentos = feature.properties.ATENDIMENTOS || 0;
@@ -147,41 +145,69 @@
   function onClick(e) {
     const properties = e.target.feature.properties;
     const atendimentos = properties.ATENDIMENTOS || 0;
+    const infoDiv = document.getElementById('info');
+    const infoContent = document.getElementById('info-content');
+    const editButton = document.getElementById('edit-button');
 
-    const popupContent = `
+    // Mostrar informações e campo de edição
+    infoDiv.style.display = 'block';
+    infoDiv.style.left = `${e.originalEvent.pageX + 10}px`;
+    infoDiv.style.top = `${e.originalEvent.pageY + 10}px`;
+
+    infoContent.innerHTML = `
       <h3>${properties.NM_MUNICIP}</h3>
-      <p><strong>Número de Atendimentos:</strong> ${atendimentos}</p>
+      <p><strong>Número de Atendimentos:</strong> <input type="number" id="atendimentos-input" value="${atendimentos}" /></p>
       <p><strong>ID:</strong> ${properties.ID}</p>
       <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
-      <button class="edit-button" onclick="editAtendimentos(event, ${properties.ID})">Editar</button>
     `;
-    L.popup()
-      .setLatLng(e.latlng)
-      .setContent(popupContent)
-      .openOn(map);
+
+    editButton.style.display = 'block';
+    editButton.onclick = () => saveEdits(properties.ID);
+
+    // Atualizar estilo da camada
+    e.target.setStyle({
+      weight: 3,
+      color: 'yellow',
+      dashArray: null,
+      fillOpacity: 0.9
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+      e.target.bringToFront();
+    }
   }
 
-  function editAtendimentos(event, id) {
-    event.stopPropagation(); // Evita que o clique no botão também feche o popup
-    const layer = findLayerById(id);
-    if (layer) {
-      const newAtendimentos = prompt(`Editar número de atendimentos para o município com ID ${NM_MUNICIP}`, layer.feature.properties.ATENDIMENTOS);
-      if (newAtendimentos !== null) {
-        layer.feature.properties.ATENDIMENTOS = parseInt(newAtendimentos, 10);
-        layer.setStyle(style(layer.feature));
-        const popupContent = `
-          <h3>${layer.feature.properties.NM_MUNICIP}</h3>
-          <p><strong>Número de Atendimentos:</strong> ${layer.feature.properties.ATENDIMENTOS}</p>
-          <p><strong>ID:</strong> ${layer.feature.properties.ID}</p>
-          <p><strong>Coordenadas:</strong> ${layer.feature.properties.CD_GEOCODM}</p>
-          <button class="edit-button" onclick="editAtendimentos(event, ${layer.feature.properties.ID})">Editar</button>
-        `;
-        L.popup()
-          .setLatLng(layer.getBounds().getCenter()) // Reposiciona o popup
-          .setContent(popupContent)
-          .openOn(map);
+  function saveEdits(id) {
+    const newAtendimentos = parseInt(document.getElementById('atendimentos-input').value, 10);
+
+    fetch('/updateAtendimentos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: id,
+        newAtendimentos: newAtendimentos
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        // Atualizar o valor na camada
+        const layer = findLayerById(id);
+        if (layer) {
+          layer.feature.properties.ATENDIMENTOS = newAtendimentos;
+          layer.setStyle(style(layer.feature));
+        }
+        document.getElementById('info').style.display = 'none';
+      } else {
+        alert('Failed to update data');
       }
-    }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Failed to update data');
+    });
   }
 
   function findLayerById(id) {
@@ -226,7 +252,7 @@
   fetch(geojsonUrl)
     .then(response => response.json())
     .then(data => {
-      geojsonLayer = L.geoJSON(data, {
+      L.geoJSON(data, {
         style: style,
         onEachFeature: function(feature, layer) {
           layer.on({
@@ -260,7 +286,7 @@
       popup.style.display = 'none';
       resetHighlight();
     });
-
+    
     updatePointer(250, true);
   });
 
