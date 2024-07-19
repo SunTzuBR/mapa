@@ -17,10 +17,10 @@
     }
     #logo {
       position: absolute;
-      height: 30px;
-      width: 50px;
-      top: 20px;
-      left: 700px;
+      height: 30px; /* Altura da logo */
+      width: 50px; /* Largura da logo */
+      top: 20px; /* Distância do topo */
+      left: 700px; /* Distância da esquerda */
     }
     .legend {
       position: absolute;
@@ -53,25 +53,20 @@
     .leaflet-control-attribution {
       display: none;
     }
+    /* Estilo dos polígonos */
     .leaflet-clickable {
       cursor: pointer;
     }
-    #info {
-      position: absolute;
-      background: white;
-      border: 1px solid black;
-      padding: 10px;
-      border-radius: 5px;
-      display: none; /* Initially hidden */
-      z-index: 1000;
-    }
-    #edit-button, #save-button {
+    /* Estilo para o formulário de edição */
+    .edit-container {
       margin-top: 10px;
     }
-    #atendimentos-input {
-      display: none;
-      width: 100px;
-      margin-top: 5px;
+    .edit-container input {
+      width: 100%;
+      margin-bottom: 5px;
+    }
+    .edit-container button {
+      width: 100%;
     }
   </style>
 </head>
@@ -85,226 +80,249 @@
 <div id="logo">
   <img src="logo.png" alt="Logo da Empresa">
 </div>
-<div id="info">
-  <h3 id="municipio-nome"></h3>
-  <p><strong>Número de Atendimentos:</strong> <span id="municipio-atendimentos"></span></p>
-  <input type="text" id="atendimentos-input">
-  <button id="edit-button" onclick="toggleEdit()">Editar</button>
-  <button id="save-button" style="display: none;" onclick="saveEdits()">Salvar</button>
-</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-  const geojsonUrl = 'AL.json'; // URL do arquivo GeoJSON
+// URL do arquivo GeoJSON
+const geojsonUrl = 'AL.json';
 
-  let currentFeatureId = null; // Variável para armazenar o ID do município atual
+// Variável para armazenar a camada clicada
+let selectedLayer = null;
 
-  function style(feature) {
-    const atendimentos = feature.properties.ATENDIMENTOS || 0;
-    let fillColor, color = 'white', dashArray = null;
-    if (atendimentos === 0) {
-      fillColor = '#ffffff';
-      color = 'black';
-      dashArray = '3'; // linha tracejada
-    } else if (atendimentos < 50) {
-      fillColor = '#01afe7';
-    } else if (atendimentos < 100) {
-      fillColor = '#6495ED';
-    } else if (atendimentos < 200) {
-      fillColor = '#6A5ACD';
-    } else if (atendimentos < 300) {
-      fillColor = '#483D8B';
-    } else if (atendimentos < 400) {
-      fillColor = '#000080';
-    } else {
-      fillColor = '#000033';
-    }
-    return {
-      fillColor: fillColor,
-      weight: 1,
-      opacity: 1,
-      color: color,
-      fillOpacity: 0.8,
-      dashArray: dashArray
-    };
+// Estilo para os polígonos no mapa
+function style(feature) {
+  const atendimentos = feature.properties.ATENDIMENTOS || 0;
+  let fillColor, color = 'white', dashArray = null;
+  if (atendimentos === 0) {
+    fillColor = '#ffffff';
+    color = 'black';
+    dashArray = '3'; // linha tracejada
+  } else if (atendimentos < 50) {
+    fillColor = '#01afe7';
+  } else if (atendimentos < 100) {
+    fillColor = '#6495ED';
+  } else if (atendimentos < 200) {
+    fillColor = '#6A5ACD';
+  } else if (atendimentos < 300) {
+    fillColor = '#483D8B';
+  } else if (atendimentos < 400) {
+    fillColor = '#000080';
+  } else {
+    fillColor = '#000033';
   }
+  return {
+    fillColor: fillColor,
+    weight: 1,
+    opacity: 1,
+    color: color,
+    fillOpacity: 0.8,
+    dashArray: dashArray
+  };
+}
 
-  function onMouseOver(e) {
-    const layer = e.target;
-    const properties = layer.feature.properties;
+// Função chamada quando o mouse passa sobre um estado
+function onMouseOver(e) {
+  const layer = e.target;
+  const properties = layer.feature.properties;
+  const atendimentos = properties.ATENDIMENTOS || 0;
+  layer.bindTooltip(`<strong>${properties.NM_MUNICIP}</strong><br>Número de Atendimentos: ${atendimentos}`).openTooltip();
+  updatePointer(atendimentos);
+
+  const popup = document.getElementById('popup');
+  popup.style.display = 'block';
+  popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`;
+  popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
+  popup.textContent = `${atendimentos}`;
+
+  // Muda o estilo do polígono ao passar o mouse
+  layer.setStyle({
+    weight: 3,
+    color: 'yellow',
+    dashArray: null,
+    fillOpacity: 0.9
+  });
+
+  if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+    layer.bringToFront();
+  }
+}
+
+// Função chamada quando o mouse sai de um estado
+function onMouseOut(e) {
+  const layer = e.target;
+  layer.closeTooltip();
+  resetHighlight(layer);
+
+  const popup = document.getElementById('popup');
+  popup.style.display = 'none';
+}
+
+// Função chamada quando um estado é clicado
+function onClick(e) {
+  const properties = e.target.feature.properties;
+  const atendimentos = properties.ATENDIMENTOS || 0;
+  selectedLayer = e.target;
+  const popupContent = `
+    <h3>${properties.NM_MUNICIP}</h3>
+    <p><strong>Número de Atendimentos:</strong></p>
+    <input type="number" id="atendimentosInput" value="${atendimentos}" />
+    <button id="saveButton">Salvar</button>
+    <button id="cancelButton">Cancelar</button>
+    <p><strong>ID:</strong> ${properties.ID}</p>
+    <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
+  `;
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(popupContent)
+    .openOn(map);
+
+  // Adiciona event listeners para os botões
+  document.getElementById('saveButton').addEventListener('click', saveChanges);
+  document.getElementById('cancelButton').addEventListener('click', cancelEdit);
+}
+
+// Função para salvar as alterações
+function saveChanges() {
+  if (selectedLayer) {
+    const newAtendimentos = document.getElementById('atendimentosInput').value;
+    selectedLayer.feature.properties.ATENDIMENTOS = parseInt(newAtendimentos, 10);
+    selectedLayer.setStyle(style(selectedLayer.feature));
+    updatePointer(newAtendimentos);
+    
+    // Atualiza o conteúdo do popup
+    const popup = L.popup()
+      .setLatLng(selectedLayer.getLatLng())
+      .setContent(`
+        <h3>${selectedLayer.feature.properties.NM_MUNICIP}</h3>
+        <p><strong>Número de Atendimentos:</strong> ${newAtendimentos}</p>
+        <p><strong>ID:</strong> ${selectedLayer.feature.properties.ID}</p>
+        <p><strong>Coordenadas:</strong> ${selectedLayer.feature.properties.CD_GEOCODM}</p>
+      `)
+      .openOn(map);
+  }
+}
+
+// Função para cancelar a edição
+function cancelEdit() {
+  // Reabre o popup original (ou apenas fecha o popup atual)
+  if (selectedLayer) {
+    const properties = selectedLayer.feature.properties;
     const atendimentos = properties.ATENDIMENTOS || 0;
-    layer.bindTooltip(`<strong>${properties.NM_MUNICIP}</strong><br>Número de Atendimentos: ${atendimentos}`).openTooltip();
-    updatePointer(atendimentos);
+    const popup = L.popup()
+      .setLatLng(selectedLayer.getLatLng())
+      .setContent(`
+        <h3>${properties.NM_MUNICIP}</h3>
+        <p><strong>Número de Atendimentos:</strong> ${atendimentos}</p>
+        <p><strong>ID:</strong> ${properties.ID}</p>
+        <p><strong>Coordenadas:</strong> ${properties.CD_GEOCODM}</p>
+      `)
+      .openOn(map);
+  }
+}
 
-    const popup = document.getElementById('popup');
+// Atualiza o ponteiro na legenda
+function updatePointer(value, isLegend = false) {
+  const min = 0;
+  const max = 500;
+  const range = max - min;
+  const percentage = (value - min) / range;
+  const pointer = document.getElementById('pointer');
+  const popup = document.getElementById('popup');
+  const topPosition = (1 - percentage) * 100;
+  pointer.style.top = `${topPosition}%`;
+  pointer.dataset.value = value;
+
+  if (isLegend) {
+    popup.textContent = `≈ ${Math.round(value)}`;
+  } else {
+    popup.textContent = ` ${Math.round(value)}`;
+  }
+}
+
+// Inicializa o mapa
+var map = L.map('map', {
+  center: [-9.5733, -36.7820],
+  zoom: 8,
+  layers: [],
+  maxBounds: [
+    [-11, -39],
+    [-7, -34]
+  ],
+  maxBoundsViscosity: 2.0
+});
+
+// Carrega o GeoJSON e adiciona ao mapa
+fetch(geojsonUrl)
+  .then(response => response.json())
+  .then(data => {
+    L.geoJSON(data, {
+      style: style,
+      onEachFeature: function(feature, layer) {
+        layer.on({
+          mouseover: onMouseOver,
+          mouseout: onMouseOut,
+          click: onClick
+        });
+      }
+    }).addTo(map);
+  });
+
+// Mostra o valor quando o mouse passa sobre a legenda
+document.addEventListener('DOMContentLoaded', () => {
+  const pointer = document.getElementById('pointer');
+  const popup = document.getElementById('popup');
+  const legend = document.querySelector('.legend');
+  
+  legend.addEventListener('mousemove', (e) => {
+    const legendHeight = legend.clientHeight;
+    const mouseY = e.clientY - legend.getBoundingClientRect().top;
+    const value = ((legendHeight - mouseY) / legendHeight) * 500;
+    updatePointer(value, true);
+
+    // Destaque os estados com valores semelhantes
+    highlightSimilarValues(value);
+    
     popup.style.display = 'block';
-    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`;
+    popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`; // Positioning to the left of the pointer
     popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
-    popup.textContent = `${atendimentos}`;
+  });
 
-    layer.setStyle({
-      weight: 3,
-      color: 'yellow',
-      dashArray: null,
-      fillOpacity: 0.9
-    });
-
-    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-      layer.bringToFront();
-    }
-  }
-
-  function onMouseOut(e) {
-    const layer = e.target;
-    layer.closeTooltip();
-    resetHighlight(layer);
-
-    const popup = document.getElementById('popup');
+  legend.addEventListener('mouseleave', () => {
     popup.style.display = 'none';
-  }
+    resetHighlight();
+  });
+  
+  // Exemplo inicial para testar a função
+  updatePointer(250, true);
+});
 
-  function onClick(e) {
-    const properties = e.target.feature.properties;
-    currentFeatureId = properties.ID; // Armazena o ID do município
-    const atendimentos = properties.ATENDIMENTOS || 0;
-    
-    document.getElementById('municipio-nome').textContent = properties.NM_MUNICIP;
-    document.getElementById('municipio-atendimentos').textContent = atendimentos;
-    document.getElementById('atendimentos-input').value = atendimentos;
-
-    document.getElementById('info').style.display = 'block';
-    document.getElementById('edit-button').style.display = 'inline-block';
-    document.getElementById('save-button').style.display = 'none';
-  }
-
-  function toggleEdit() {
-    const input = document.getElementById('atendimentos-input');
-    const isEditing = input.style.display === 'inline-block';
-    
-    if (isEditing) {
-      input.style.display = 'none';
-      document.getElementById('edit-button').textContent = 'Editar';
-      document.getElementById('save-button').style.display = 'none';
-    } else {
-      input.style.display = 'inline-block';
-      document.getElementById('edit-button').textContent = 'Cancelar';
-      document.getElementById('save-button').style.display = 'inline-block';
+// Destaca áreas com valores semelhantes
+function highlightSimilarValues(value) {
+  map.eachLayer(layer => {
+    if (layer.feature) {
+      const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
+      if (Math.abs(atendimentos - value) < 10) {
+        layer.setStyle({ weight: 3, color: 'yellow' });
+      } else {
+        layer.setStyle(style(layer.feature));
+      }
     }
-  }
+  });
+}
 
-  function saveEdits() {
-    const newAtendimentos = parseInt(document.getElementById('atendimentos-input').value, 10);
-
-    if (currentFeatureId) {
-      map.eachLayer(layer => {
-        if (layer.feature && layer.feature.properties.ID === currentFeatureId) {
-          layer.feature.properties.ATENDIMENTOS = newAtendimentos;
-          layer.setStyle(style(layer.feature));
-        }
-      });
-
-      document.getElementById('municipio-atendimentos').textContent = newAtendimentos;
-      document.getElementById('info').style.display = 'none';
-    }
-  }
-
-  function updatePointer(value, isLegend = false) {
-    const min = 0;
-    const max = 500;
-    const range = max - min;
-    const percentage = (value - min) / range;
-    const pointer = document.getElementById('pointer');
-    const popup = document.getElementById('popup');
-    const topPosition = (1 - percentage) * 100;
-    pointer.style.top = `${topPosition}%`;
-    pointer.dataset.value = value;
-
-    if (isLegend) {
-      popup.textContent = `≈ ${Math.round(value)}`;
-    } else {
-      popup.textContent = ` ${Math.round(value)}`;
-    }
-  }
-
-  function highlightSimilarValues(value) {
-    map.eachLayer(layer => {
-      if (layer.feature) {
-        const atendimentos = layer.feature.properties.ATENDIMENTOS || 0;
-        if (Math.abs(atendimentos - value) < 10) {
-          layer.setStyle({ weight: 3, color: 'yellow' });
-        } else {
-          layer.setStyle(style(layer.feature));
-        }
+// Restaura o estilo original das áreas destacadas
+function resetHighlight(layer) {
+  if (layer) {
+    layer.setStyle(style(layer.feature));
+  } else {
+    map.eachLayer(l => {
+      if (l.feature) {
+        l.setStyle(style(l.feature));
       }
     });
   }
-
-  function resetHighlight(layer) {
-    if (layer) {
-      layer.setStyle(style(layer.feature));
-    } else {
-      map.eachLayer(l => {
-        if (l.feature) {
-          l.setStyle(style(l.feature));
-        }
-      });
-    }
-  }
-
-  // Inicializa o mapa
-  var map = L.map('map', {
-    center: [-9.5733, -36.7820],
-    zoom: 8,
-    layers: [],
-    maxBounds: [
-      [-11, -39],
-      [-7, -34]
-    ],
-    maxBoundsViscosity: 2.0
-  });
-
-  // Carrega o GeoJSON e adiciona ao mapa
-  fetch(geojsonUrl)
-    .then(response => response.json())
-    .then(data => {
-      L.geoJSON(data, {
-        style: style,
-        onEachFeature: function(feature, layer) {
-          layer.on({
-            mouseover: onMouseOver,
-            mouseout: onMouseOut,
-            click: onClick
-          });
-        }
-      }).addTo(map);
-    });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const pointer = document.getElementById('pointer');
-    const popup = document.getElementById('popup');
-    const legend = document.querySelector('.legend');
-    
-    legend.addEventListener('mousemove', (e) => {
-      const legendHeight = legend.clientHeight;
-      const mouseY = e.clientY - legend.getBoundingClientRect().top;
-      const value = ((legendHeight - mouseY) / legendHeight) * 500;
-      updatePointer(value, true);
-
-      highlightSimilarValues(value);
-      
-      popup.style.display = 'block';
-      popup.style.left = `${pointer.offsetLeft - popup.offsetWidth - 3}px`;
-      popup.style.top = `${pointer.offsetTop + pointer.offsetHeight / 2}px`;
-    });
-
-    legend.addEventListener('mouseleave', () => {
-      popup.style.display = 'none';
-      resetHighlight();
-    });
-    
-    updatePointer(250, true);
-  });
+}
 </script>
 
 </body>
