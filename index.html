@@ -49,6 +49,7 @@
       border-radius: 2px;
       display: none; /* Initially hidden */
       transform: translateY(-50%);
+      z-index: 1000; /* Ensure popup is above other elements */
     }
     .leaflet-control-attribution {
       display: none;
@@ -217,7 +218,6 @@ function cancelEdit() {
 function toggleEditMode(edit = true) {
   const editContainer = document.getElementById('editContainer');
   const atendimentosValue = document.getElementById('atendimentosValue');
-  const editIcon = document.querySelector('.edit-icon');
   
   if (edit) {
     editContainer.style.display = 'block';
@@ -256,9 +256,7 @@ var map = L.map('map', {
     [-11, -39],
     [-7, -34]
   ],
-  maxBoundsViscosity: 2
-
-    2.0
+  maxBoundsViscosity: 2.0
 });
 
 // Carrega o GeoJSON e adiciona ao mapa
